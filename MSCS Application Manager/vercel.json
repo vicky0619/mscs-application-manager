@@ -1,4 +1,6 @@
 {
+  "buildCommand": "cd \"MSCS Application Manager\" && npm install",
+  "outputDirectory": "MSCS Application Manager",
   "trailingSlash": false,
   "redirects": [
     {

@@ -1,18 +1,12 @@
 [build]
-  publish = "."
-  base = "."
+  base = "MSCS Application Manager"
+  publish = "MSCS Application Manager"
+  command = "npm install"
   
 [build.environment]
   NODE_VERSION = "18"
 
 [[redirects]]
-  from = "/*"
-  to = "/modern.html"
-  status = 200
-  force = false
-  conditions = {Role = ["admin"]}
-
-[[redirects]]  
   from = "/login"
   to = "/login-modern.html"
   status = 200
@@ -20,6 +14,11 @@
 [[redirects]]
   from = "/"
   to = "/login-modern.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/modern.html"
   status = 200
 
 [[headers]]
