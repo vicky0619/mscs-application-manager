@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  universities University[]
+  documents    Document[]
+  tasks        Task[]
+  deadlines    Deadline[]
+
+  @@map("users")
+}
+
+model University {
+  id        String   @id @default(cuid())
+  name      String
+  url       String?
+  status    String   @default("RESEARCHING")
+  category  String
+  deadline  DateTime?
+  lorDeadline DateTime?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  tasks     Task[]
+  deadlines Deadline[]
+  requirements UniversityRequirement?
+
+  @@map("universities")
+}
+
+model UniversityRequirement {
+  id             String @id @default(cuid())
+  greMin         Int?
+  greQuantMin    Int?
+  toeflMin       Int?
+  ieltsMin       Float?
+  gpaMin         Float?
+  tuitionPerYear Int?
+  admissionRate  Float?
+  jobPlacement   Float?
+  h1bSuccess     Float?
+  location       String?
+  programLength  String?
+  specializations String?
+  stemDesignated Boolean @default(true)
+
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  universityId String     @unique
+
+  @@map("university_requirements")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  version   String   @default("1")
+  fileUrl   String?
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@map("documents")
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("PENDING")
+  priority    String   @default("MEDIUM")
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+  universityId String?
+
+  @@map("tasks")
+}
+
+model Deadline {
+  id        String   @id @default(cuid())
+  title     String
+  type      String
+  date      DateTime
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+  universityId String?
+
+  @@map("deadlines")
+}

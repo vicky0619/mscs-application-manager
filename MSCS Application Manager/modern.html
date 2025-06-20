@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSCS Application Manager</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/modern.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MSCS Manager">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Theme script (load early to prevent FOUC) -->
+    <script>
+        // Minimal theme detection to prevent flash
+        (function() {
+            const stored = localStorage.getItem('theme-preference');
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = stored || (systemDark ? 'dark' : 'light');
+            
+            if (theme === 'dark' || (stored === null && systemDark)) {
+                document.documentElement.classList.add('theme-dark');
+            } else {
+                document.documentElement.classList.add('theme-light');
+            }
+        })();
+    </script>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/kanban.js"></script>
+</head>
+<body>
+    <!-- Modern Navigation -->
+    <nav class="modern-nav">
+        <div class="modern-nav-content">
+            <a href="#" class="modern-logo">
+                <div class="modern-logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span>MSCS Manager</span>
+                <span class="modern-badge">2026</span>
+            </a>
+            
+            <div class="modern-nav-actions">
+                <button class="modern-btn modern-btn-ghost" id="search-btn">
+                    <i class="fas fa-search"></i>
+                    <span class="sr-only">Search</span>
+                </button>
+                <button class="modern-btn modern-btn-ghost theme-toggle" title="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                    <span class="sr-only">Toggle theme</span>
+                </button>
+                <button class="modern-btn modern-btn-ghost" id="notifications-btn">
+                    <i class="fas fa-bell"></i>
+                    <span class="modern-badge-dot"></span>
+                </button>
+                <div class="modern-user-menu">
+                    <button class="modern-btn modern-btn-ghost" id="user-menu-btn">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="user-name">Guest</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="modern-container">
+        <!-- Modern Tabs -->
+        <div class="modern-tabs">
+            <div class="modern-tabs-list">
+                <a href="#" class="modern-tab active" data-tab="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    Dashboard
+                </a>
+                <a href="#" class="modern-tab" data-tab="universities">
+                    <i class="fas fa-university"></i>
+                    Universities
+                </a>
+                <a href="#" class="modern-tab" data-tab="tasks">
+                    <i class="fas fa-tasks"></i>
+                    Tasks
+                </a>
+                <a href="#" class="modern-tab" data-tab="documents">
+                    <i class="fas fa-file-alt"></i>
+                    Documents
+                </a>
+                <a href="#" class="modern-tab" data-tab="deadlines">
+                    <i class="fas fa-calendar-alt"></i>
+                    Deadlines
+                </a>
+                <a href="#" class="modern-tab" data-tab="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    Analytics
+                </a>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboard-content" class="modern-tab-content">
+            <!-- Quick Actions -->
+            <div class="modern-quick-actions">
+                <button class="modern-btn modern-btn-primary" onclick="showAddUniversityModal()">
+                    <i class="fas fa-plus"></i>
+                    Add University
+                </button>
+                <button class="modern-btn modern-btn-accent" onclick="showAddTaskModal()">
+                    <i class="fas fa-plus"></i>
+                    Add Task
+                </button>
+                <button class="modern-btn modern-btn-secondary">
+                    <i class="fas fa-upload"></i>
+                    Upload Document
+                </button>
+                <button class="modern-btn modern-btn-ghost">
+                    <i class="fas fa-download"></i>
+                    Export Data
+                </button>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="modern-stats-grid">
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #f3f4f6; color: #374151;">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                    <div class="modern-stat-value" id="total-universities-modern">0</div>
+                    <div class="modern-stat-label">Total Universities</div>
+                    <div class="modern-stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        12% from last month
+                    </div>
+                </div>
+
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #fee2e2; color: #dc2626;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                    <div class="modern-stat-value" id="pending-deadlines-modern">0</div>
+                    <div class="modern-stat-label">Pending Deadlines</div>
+                    <div class="modern-stat-change negative">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        3 overdue
+                    </div>
+                </div>
+
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #dcfce7; color: #16a34a;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                    <div class="modern-stat-value" id="completed-tasks-modern">0</div>
+                    <div class="modern-stat-label">Completed Tasks</div>
+                    <div class="modern-stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        8 this week
+                    </div>
+                </div>
+
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #dbeafe; color: #2563eb;">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
+                    <div class="modern-stat-value" id="total-documents-modern">0</div>
+                    <div class="modern-stat-label">Documents</div>
+                    <div class="modern-stat-change">
+                        <i class="fas fa-file"></i>
+                        SOPs, CVs, Transcripts
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="modern-dashboard-grid">
+                <!-- Kanban Preview -->
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Task Progress</h3>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-expand-alt"></i>
+                        </button>
+                    </div>
+                    <div class="modern-card-content">
+                        <div class="modern-kanban-preview">
+                            <div class="modern-kanban-mini">
+                                <div class="modern-kanban-mini-column">
+                                    <div class="modern-kanban-mini-header">
+                                        <span>To Do</span>
+                                        <span class="modern-kanban-count" id="todo-count">0</span>
+                                    </div>
+                                    <div class="modern-kanban-mini-items" id="todo-preview">
+                                        <!-- Items will be populated by JS -->
+                                    </div>
+                                </div>
+                                <div class="modern-kanban-mini-column">
+                                    <div class="modern-kanban-mini-header">
+                                        <span>In Progress</span>
+                                        <span class="modern-kanban-count" id="progress-count">0</span>
+                                    </div>
+                                    <div class="modern-kanban-mini-items" id="progress-preview">
+                                        <!-- Items will be populated by JS -->
+                                    </div>
+                                </div>
+                                <div class="modern-kanban-mini-column">
+                                    <div class="modern-kanban-mini-header">
+                                        <span>Done</span>
+                                        <span class="modern-kanban-count" id="done-count">0</span>
+                                    </div>
+                                    <div class="modern-kanban-mini-items" id="done-preview">
+                                        <!-- Items will be populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Recent Activity</h3>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-refresh"></i>
+                        </button>
+                    </div>
+                    <div class="modern-card-content">
+                        <div class="modern-activity-list" id="recent-activity-modern">
+                            <!-- Activity items will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Deadlines -->
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Upcoming Deadlines</h3>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-calendar-plus"></i>
+                        </button>
+                    </div>
+                    <div class="modern-card-content">
+                        <div class="modern-deadline-list" id="upcoming-deadlines-modern">
+                            <!-- Deadline items will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Chart -->
+                <div class="modern-card modern-chart-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Application Progress</h3>
+                        <div class="modern-chart-controls">
+                            <select class="modern-select modern-select-sm">
+                                <option>Last 30 days</option>
+                                <option>Last 3 months</option>
+                                <option>Last 6 months</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modern-card-content">
+                        <div class="modern-chart-container" id="progress-chart">
+                            <!-- Chart will be rendered here -->
+                            <div class="modern-chart-placeholder">
+                                <i class="fas fa-chart-line"></i>
+                                <p>Progress chart will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Universities Content -->
+        <div id="universities-content" class="modern-tab-content hidden">
+            <div class="modern-page-header">
+                <div class="modern-page-title">
+                    <h1 class="text-heading-1">Universities</h1>
+                    <p class="text-body-large">Manage your university applications and track progress</p>
+                </div>
+                <div class="modern-page-actions">
+                    <button class="modern-btn modern-btn-secondary">
+                        <i class="fas fa-filter"></i>
+                        Filter
+                    </button>
+                    <button class="modern-btn modern-btn-primary" onclick="showAddUniversityModal()">
+                        <i class="fas fa-plus"></i>
+                        Add University
+                    </button>
+                </div>
+            </div>
+
+            <div class="modern-university-grid" id="modern-universities-list">
+                <!-- University cards will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Tasks Content -->
+        <div id="tasks-content" class="modern-tab-content hidden">
+            <div class="modern-page-header">
+                <div class="modern-page-title">
+                    <h1 class="text-heading-1">Tasks</h1>
+                    <p class="text-body-large">Organize and track your application tasks</p>
+                </div>
+                <div class="modern-page-actions">
+                    <button class="modern-btn modern-btn-secondary">
+                        <i class="fas fa-filter"></i>
+                        Filter
+                    </button>
+                    <button class="modern-btn modern-btn-primary" onclick="showAddTaskModal()">
+                        <i class="fas fa-plus"></i>
+                        Add Task
+                    </button>
+                </div>
+            </div>
+
+            <div class="modern-kanban" id="modern-kanban-board">
+                <!-- Kanban columns will be populated by JS -->
+            </div>
+        </div>
+
+        <!-- Analytics Content -->
+        <div id="analytics-content" class="modern-tab-content hidden">
+            <div class="modern-page-header">
+                <div class="modern-page-title">
+                    <h1 class="text-heading-1">Analytics Dashboard</h1>
+                    <p class="text-body-large">Track your application progress and performance metrics</p>
+                </div>
+                <div class="modern-page-actions">
+                    <button class="modern-btn modern-btn-secondary">
+                        <i class="fas fa-download"></i>
+                        Export Data
+                    </button>
+                    <button class="modern-btn modern-btn-ghost" onclick="updateAnalyticsCharts()">
+                        <i class="fas fa-refresh"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analytics Stats Overview -->
+            <div class="modern-stats-grid mb-8">
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #dbeafe; color: #2563eb;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                    <div class="modern-stat-value" id="analytics-completion-rate">0%</div>
+                    <div class="modern-stat-label">Completion Rate</div>
+                    <div class="modern-stat-change positive">
+                        <i class="fas fa-arrow-up"></i>
+                        5% from last month
+                    </div>
+                </div>
+
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #dcfce7; color: #16a34a;">
+                            <i class="fas fa-target"></i>
+                        </div>
+                    </div>
+                    <div class="modern-stat-value" id="analytics-avg-response">12</div>
+                    <div class="modern-stat-label">Avg Response Days</div>
+                    <div class="modern-stat-change negative">
+                        <i class="fas fa-arrow-down"></i>
+                        2 days faster
+                    </div>
+                </div>
+
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #fef3c7; color: #d97706;">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                    </div>
+                    <div class="modern-stat-value" id="analytics-deadlines-met">85%</div>
+                    <div class="modern-stat-label">Deadlines Met</div>
+                    <div class="modern-stat-change positive">
+                        <i class="fas fa-check"></i>
+                        On track
+                    </div>
+                </div>
+
+                <div class="modern-stat-card">
+                    <div class="modern-stat-header">
+                        <div class="modern-stat-icon" style="background: #fee2e2; color: #dc2626;">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="modern-stat-value" id="analytics-time-spent">42h</div>
+                    <div class="modern-stat-label">Time This Month</div>
+                    <div class="modern-stat-change">
+                        <i class="fas fa-hourglass-half"></i>
+                        8h per week avg
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Charts Grid -->
+            <div class="modern-analytics-grid">
+                <!-- Progress Chart (already exists) -->
+                <div class="modern-card modern-chart-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Application Progress</h3>
+                        <div class="modern-chart-controls">
+                            <select class="modern-select modern-select-sm">
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 3 months</option>
+                                <option value="180">Last 6 months</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modern-card-content">
+                        <div class="modern-chart-container" style="height: 350px;">
+                            <canvas id="progress-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Distribution -->
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Application Status</h3>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                    <div class="modern-card-content">
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="status-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Timeline -->
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Task Timeline</h3>
+                        <select class="modern-select modern-select-sm">
+                            <option>Last 6 months</option>
+                            <option>Last 3 months</option>
+                            <option>This year</option>
+                        </select>
+                    </div>
+                    <div class="modern-card-content">
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="timeline-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Priority Distribution -->
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Task Priority Distribution</h3>
+                    </div>
+                    <div class="modern-card-content">
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="priority-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deadline Radar -->
+                <div class="modern-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Deadline Distribution</h3>
+                        <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                            <i class="fas fa-question-circle"></i>
+                        </button>
+                    </div>
+                    <div class="modern-card-content">
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="deadlines-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monthly Progress -->
+                <div class="modern-card modern-chart-card">
+                    <div class="modern-card-header">
+                        <h3 class="text-heading-3">Monthly Progress</h3>
+                        <div class="modern-chart-controls">
+                            <select class="modern-select modern-select-sm">
+                                <option>Last 6 months</option>
+                                <option>This year</option>
+                                <option>All time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modern-card-content">
+                        <div style="height: 300px; position: relative;">
+                            <canvas id="monthly-progress-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Insights -->
+            <div class="modern-card mt-8">
+                <div class="modern-card-header">
+                    <h3 class="text-heading-3">Performance Insights</h3>
+                    <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                        <i class="fas fa-lightbulb"></i>
+                        Get AI Insights
+                    </button>
+                </div>
+                <div class="modern-card-content">
+                    <div class="modern-insights-grid">
+                        <div class="modern-insight-item">
+                            <div class="modern-insight-icon success">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="modern-insight-content">
+                                <h4 class="modern-insight-title">Great Progress!</h4>
+                                <p class="modern-insight-description">You've completed 85% of your planned tasks this month. Keep up the excellent work!</p>
+                            </div>
+                        </div>
+
+                        <div class="modern-insight-item">
+                            <div class="modern-insight-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="modern-insight-content">
+                                <h4 class="modern-insight-title">Upcoming Deadlines</h4>
+                                <p class="modern-insight-description">You have 3 application deadlines in the next 2 weeks. Consider prioritizing these tasks.</p>
+                            </div>
+                        </div>
+
+                        <div class="modern-insight-item">
+                            <div class="modern-insight-icon info">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="modern-insight-content">
+                                <h4 class="modern-insight-title">Application Trend</h4>
+                                <p class="modern-insight-description">Your application submission rate has increased by 30% compared to last month.</p>
+                            </div>
+                        </div>
+
+                        <div class="modern-insight-item">
+                            <div class="modern-insight-icon neutral">
+                                <i class="fas fa-target"></i>
+                            </div>
+                            <div class="modern-insight-content">
+                                <h4 class="modern-insight-title">Goal Tracking</h4>
+                                <p class="modern-insight-description">You're 67% toward your goal of applying to 15 universities this cycle.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Content -->
+        <div id="documents-content" class="modern-tab-content hidden">
+            <div class="modern-page-header">
+                <div class="modern-page-title">
+                    <h1 class="text-heading-1">Documents</h1>
+                    <p class="text-body-large">Manage your application documents and track versions</p>
+                </div>
+                <div class="modern-page-actions">
+                    <button class="modern-btn modern-btn-secondary">
+                        <i class="fas fa-filter"></i>
+                        Filter
+                    </button>
+                    <button class="modern-btn modern-btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Upload Document
+                    </button>
+                </div>
+            </div>
+
+            <div class="modern-document-grid" id="modern-documents-list">
+                <!-- Document cards will be populated by JS -->
+                <div class="modern-card text-center py-12">
+                    <div class="modern-stat-icon" style="background: var(--color-gray-100); color: var(--color-gray-400); margin: 0 auto var(--space-4)">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="text-heading-3 mb-2">No documents uploaded yet</h3>
+                    <p class="text-body text-gray-500 mb-4">Upload your SOPs, CVs, and other application documents</p>
+                    <button class="modern-btn modern-btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Upload First Document
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deadlines Content -->
+        <div id="deadlines-content" class="modern-tab-content hidden">
+            <div class="modern-page-header">
+                <div class="modern-page-title">
+                    <h1 class="text-heading-1">Deadlines</h1>
+                    <p class="text-body-large">Track application deadlines and important dates</p>
+                </div>
+                <div class="modern-page-actions">
+                    <button class="modern-btn modern-btn-secondary">
+                        <i class="fas fa-calendar-week"></i>
+                        Calendar View
+                    </button>
+                    <button class="modern-btn modern-btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Add Deadline
+                    </button>
+                </div>
+            </div>
+
+            <div class="modern-deadline-timeline" id="modern-deadlines-list">
+                <!-- Deadline items will be populated by JS -->
+                <div class="modern-card text-center py-12">
+                    <div class="modern-stat-icon" style="background: var(--color-gray-100); color: var(--color-gray-400); margin: 0 auto var(--space-4)">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="text-heading-3 mb-2">No deadlines tracked yet</h3>
+                    <p class="text-body text-gray-500 mb-4">Add important application deadlines to stay organized</p>
+                    <button class="modern-btn modern-btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Add First Deadline
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern University Modal -->
+    <div id="university-modal" class="modern-modal hidden">
+        <div class="modern-modal-content">
+            <div class="modern-modal-header">
+                <h2 class="text-heading-2">Add University</h2>
+                <button class="modern-btn modern-btn-ghost" onclick="hideUniversityModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modern-modal-body">
+                <form class="modern-form">
+                    <div class="modern-form-grid">
+                        <div class="modern-form-group">
+                            <label class="modern-label">University Name *</label>
+                            <input type="text" name="name" class="modern-input" placeholder="e.g. Stanford University" required>
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">Program URL</label>
+                            <input type="url" name="url" class="modern-input" placeholder="https://cs.stanford.edu">
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">Category *</label>
+                            <select name="category" class="modern-input modern-select" required>
+                                <option value="">Select Category</option>
+                                <option value="REACH">Reach School</option>
+                                <option value="TARGET">Target School</option>
+                                <option value="SAFETY">Safety School</option>
+                            </select>
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">Status</label>
+                            <select name="status" class="modern-input modern-select">
+                                <option value="RESEARCHING">Researching</option>
+                                <option value="PLANNING_TO_APPLY">Planning to Apply</option>
+                                <option value="APPLIED">Applied</option>
+                                <option value="ADMITTED">Admitted</option>
+                                <option value="REJECTED">Rejected</option>
+                            </select>
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">Application Deadline</label>
+                            <input type="date" name="deadline" class="modern-input">
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">LOR Deadline</label>
+                            <input type="date" name="lorDeadline" class="modern-input">
+                        </div>
+                    </div>
+                    
+                    <div class="modern-form-group">
+                        <label class="modern-label">Notes</label>
+                        <textarea name="notes" class="modern-input" rows="3" placeholder="Add any notes about this university..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modern-modal-footer">
+                <button type="button" class="modern-btn modern-btn-secondary" onclick="hideUniversityModal()">Cancel</button>
+                <button type="submit" class="modern-btn modern-btn-primary">Save University</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Task Modal -->
+    <div id="task-modal" class="modern-modal hidden">
+        <div class="modern-modal-content">
+            <div class="modern-modal-header">
+                <h2 class="text-heading-2">Add Task</h2>
+                <button class="modern-btn modern-btn-ghost" onclick="hideTaskModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modern-modal-body">
+                <form class="modern-form">
+                    <div class="modern-form-group">
+                        <label class="modern-label">Task Title *</label>
+                        <input type="text" name="title" class="modern-input" placeholder="e.g. Submit Stanford application" required>
+                    </div>
+                    
+                    <div class="modern-form-group">
+                        <label class="modern-label">Description</label>
+                        <textarea name="description" class="modern-input" rows="3" placeholder="Add task details..."></textarea>
+                    </div>
+                    
+                    <div class="modern-form-grid">
+                        <div class="modern-form-group">
+                            <label class="modern-label">Status</label>
+                            <select name="status" class="modern-input modern-select">
+                                <option value="PENDING">To Do</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="COMPLETED">Completed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">Priority</label>
+                            <select name="priority" class="modern-input modern-select">
+                                <option value="LOW">Low</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="HIGH">High</option>
+                                <option value="URGENT">Urgent</option>
+                            </select>
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">Due Date</label>
+                            <input type="date" name="dueDate" class="modern-input">
+                        </div>
+                        
+                        <div class="modern-form-group">
+                            <label class="modern-label">Related University</label>
+                            <select name="universityId" class="modern-input modern-select">
+                                <option value="">None</option>
+                                <!-- Options populated by JS -->
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modern-modal-footer">
+                <button type="button" class="modern-btn modern-btn-secondary" onclick="hideTaskModal()">Cancel</button>
+                <button type="submit" class="modern-btn modern-btn-primary">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional CSS for the modern design -->
+    <style>
+        .modern-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: var(--space-6);
+        }
+
+        .modern-badge {
+            background: var(--color-gray-100);
+            color: var(--color-gray-600);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .modern-badge-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: var(--color-red);
+            border-radius: 50%;
+            border: 2px solid var(--color-white);
+        }
+
+        .modern-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .modern-user-menu {
+            position: relative;
+        }
+
+        .modern-quick-actions {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-8);
+            flex-wrap: wrap;
+        }
+
+        .modern-dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .modern-chart-card {
+            grid-column: span 2;
+        }
+
+        .modern-chart-container {
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modern-chart-placeholder {
+            text-align: center;
+            color: var(--color-gray-400);
+        }
+
+        .modern-chart-placeholder i {
+            font-size: 3rem;
+            margin-bottom: var(--space-4);
+        }
+
+        .modern-kanban-preview {
+            height: 200px;
+        }
+
+        .modern-kanban-mini {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-3);
+            height: 100%;
+        }
+
+        .modern-kanban-mini-column {
+            background: var(--color-gray-50);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+        }
+
+        .modern-kanban-mini-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-2);
+            font-weight: 500;
+            font-size: var(--text-body-small);
+        }
+
+        .modern-activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .modern-deadline-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .modern-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-8);
+        }
+
+        .modern-page-actions {
+            display: flex;
+            gap: var(--space-3);
+        }
+
+        .modern-university-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .modern-form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .modern-chart-controls {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .modern-select-sm {
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-body-small);
+        }
+
+        .modern-btn-sm {
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-body-small);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1024px) {
+            .modern-chart-card {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .modern-page-header {
+                flex-direction: column;
+                gap: var(--space-4);
+            }
+
+            .modern-quick-actions {
+                justify-content: center;
+            }
+
+            .modern-tabs-list {
+                overflow-x: auto;
+                padding: 0 var(--space-4);
+            }
+        }
+    </style>
+
+    <!-- Tab switching script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Modern tab switching
+            document.querySelectorAll('.modern-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remove active class from all tabs
+                    document.querySelectorAll('.modern-tab').forEach(t => t.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Hide all tab content
+                    document.querySelectorAll('.modern-tab-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    
+                    // Show target content
+                    const targetTab = tab.dataset.tab;
+                    const targetContent = document.getElementById(targetTab + '-content');
+                    if (targetContent) {
+                        targetContent.classList.remove('hidden');
+                    }
+                });
+            });
+        });
+        
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('✅ Service Worker registered successfully:', registration.scope);
+                    
+                    // Listen for service worker updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New service worker available
+                                    if (confirm('A new version is available. Reload to update?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        }
+                    });
+                } catch (error) {
+                    console.error('❌ Service Worker registration failed:', error);
+                }
+            });
+            
+            // Listen for service worker messages
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                const { type, payload } = event.data;
+                
+                switch (type) {
+                    case 'SW_ACTIVATED':
+                        console.log('🚀 Service Worker activated, cache version:', payload.cacheVersion);
+                        break;
+                    case 'SYNC_COMPLETE':
+                        console.log('🔄 Background sync completed');
+                        if (payload.success) {
+                            // Refresh data or show success message
+                            if (typeof loadDashboardData === 'function') {
+                                loadDashboardData();
+                            }
+                        }
+                        break;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
