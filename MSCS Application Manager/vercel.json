@@ -1,20 +1,9 @@
 {
-  "rewrites": [
+  "trailingSlash": false,
+  "redirects": [
     {
       "source": "/",
       "destination": "/login-modern.html"
-    },
-    {
-      "source": "/login",
-      "destination": "/login-modern.html"
-    },
-    {
-      "source": "/app",
-      "destination": "/modern.html"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/modern.html"
     }
   ],
   "headers": [
