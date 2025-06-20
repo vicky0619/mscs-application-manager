@@ -4,7 +4,7 @@ const config = {
     API_BASE_URL: 'http://localhost:5001/api'
   },
   production: {
-    API_BASE_URL: 'https://your-railway-app.railway.app/api' // Update after backend deployment
+    API_BASE_URL: 'https://mscs-application-manager-production.railway.app/api' // Update with your actual Railway URL
   }
 };
 
