@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSCS Application Manager | Fall 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/modals.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .kanban-column {
+            min-height: 500px;
+            background-color: #f1f5f9;
+            border-radius: 0.5rem;
+        }
+        
+        .kanban-item {
+            transition: all 0.2s ease;
+        }
+        
+        .kanban-item:hover {
+            background-color: #e2e8f0;
+        }
+        
+        .tag-reach {
+            background-color: #fecaca;
+            color: #b91c1c;
+        }
+        
+        .tag-target {
+            background-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+        
+        .tag-safety {
+            background-color: #bbf7d0;
+            color: #166534;
+        }
+        
+        .status-researching {
+            background-color: #e9d5ff;
+            color: #7e22ce;
+        }
+        
+        .status-applied {
+            background-color: #93c5fd;
+            color: #1e40af;
+        }
+        
+        .status-admitted {
+            background-color: #86efac;
+            color: #166534;
+        }
+        
+        .status-rejected {
+            background-color: #fca5a5;
+            color: #b91c1c;
+        }
+        
+        .document-version {
+            border-left: 3px solid #4f46e5;
+        }
+        
+        .timeline-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 1.25rem;
+            top: 2.5rem;
+            height: calc(100% - 2.5rem);
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-graduation-cap text-2xl"></i>
+                <h1 class="text-xl font-bold">MSCS Application Manager</h1>
+                <span class="text-sm bg-white text-purple-700 px-2 py-1 rounded-full ml-2">Fall 2026</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="export-btn" class="bg-white text-purple-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
+                    <i class="fas fa-file-export mr-2"></i>Export
+                </button>
+                <button id="settings-btn" class="text-white hover:text-gray-200 transition">
+                    <i class="fas fa-cog text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Dashboard Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Total Universities</p>
+                        <h2 class="text-3xl font-bold mt-1" id="total-universities">0</h2>
+                    </div>
+                    <div class="bg-purple-100 text-purple-800 p-3 rounded-lg">
+                        <i class="fas fa-university text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Researching</span>
+                        <span class="font-medium" id="researching-count">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-2">
+                        <span class="text-gray-600">Applied</span>
+                        <span class="font-medium" id="applied-count">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Upcoming Deadlines</p>
+                        <h2 class="text-3xl font-bold mt-1" id="upcoming-deadlines">0</h2>
+                    </div>
+                    <div class="bg-red-100 text-red-800 p-3 rounded-lg">
+                        <i class="fas fa-calendar-times text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">This Week</span>
+                        <span class="font-medium" id="deadlines-week">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-2">
+                        <span class="text-gray-600">This Month</span>
+                        <span class="font-medium" id="deadlines-month">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Pending Tasks</p>
+                        <h2 class="text-3xl font-bold mt-1" id="pending-tasks">0</h2>
+                    </div>
+                    <div class="bg-yellow-100 text-yellow-800 p-3 rounded-lg">
+                        <i class="fas fa-tasks text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Overdue</span>
+                        <span class="font-medium" id="overdue-tasks">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-2">
+                        <span class="text-gray-600">High Priority</span>
+                        <span class="font-medium" id="high-priority-tasks">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-500">Documents</p>
+                        <h2 class="text-3xl font-bold mt-1" id="total-documents">0</h2>
+                    </div>
+                    <div class="bg-green-100 text-green-800 p-3 rounded-lg">
+                        <i class="fas fa-file-alt text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">SOPs</span>
+                        <span class="font-medium" id="sop-count">0</span>
+                    </div>
+                    <div class="flex justify-between text-sm mt-2">
+                        <span class="text-gray-600">LORs</span>
+                        <span class="font-medium" id="lor-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="flex overflow-x-auto border-b border-gray-200 mb-8">
+            <button id="dashboard-tab" class="tab-active px-6 py-3 font-medium text-purple-700 border-b-2 border-purple-700 whitespace-nowrap">
+                <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+            </button>
+            <button id="universities-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-purple-700 whitespace-nowrap">
+                <i class="fas fa-university mr-2"></i>Universities
+            </button>
+            <button id="deadlines-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-purple-700 whitespace-nowrap">
+                <i class="fas fa-calendar-alt mr-2"></i>Deadlines
+            </button>
+            <button id="documents-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-purple-700 whitespace-nowrap">
+                <i class="fas fa-file-alt mr-2"></i>Documents
+            </button>
+            <button id="tasks-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-purple-700 whitespace-nowrap">
+                <i class="fas fa-tasks mr-2"></i>Tasks
+            </button>
+            <button id="comparison-tab" class="px-6 py-3 font-medium text-gray-500 hover:text-purple-700 whitespace-nowrap">
+                <i class="fas fa-balance-scale mr-2"></i>Comparison
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <!-- University Status Chart -->
+                <div class="bg-white rounded-xl p-6 card-hover lg:col-span-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold">University Application Status</h2>
+                        <div class="flex space-x-2">
+                            <button class="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm">This Year</button>
+                            <button class="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-sm">All</button>
+                        </div>
+                    </div>
+                    <div id="status-chart" class="h-64 flex items-center justify-center text-gray-500">
+                        <p>No university data available</p>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Deadlines -->
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h2 class="text-xl font-bold mb-6">Upcoming Deadlines</h2>
+                    <div id="upcoming-deadlines-list" class="space-y-4">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-calendar-alt text-3xl mb-2"></i>
+                            <p>No upcoming deadlines</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kanban Progress Tracker -->
+            <div class="bg-white rounded-xl p-6 card-hover mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Application Progress</h2>
+                    <button id="add-task-btn" class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">
+                        <i class="fas fa-plus mr-2"></i>Add Task
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Researching Column -->
+                    <div class="kanban-column p-4">
+                        <h3 class="font-medium mb-4 text-gray-700"><i class="fas fa-search mr-2"></i>Researching</h3>
+                        <div id="researching-tasks" class="space-y-3">
+                            <div class="kanban-item bg-white p-3 rounded-lg shadow cursor-move">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-medium">Shortlist universities</span>
+                                    <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">High</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1">Identify 10-12 target schools</p>
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-xs text-gray-400">Due: Sep 30</span>
+                                    <div class="flex space-x-1">
+                                        <button class="text-gray-400 hover:text-purple-700"><i class="fas fa-edit text-xs"></i></button>
+                                        <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preparing Column -->
+                    <div class="kanban-column p-4">
+                        <h3 class="font-medium mb-4 text-gray-700"><i class="fas fa-pencil-alt mr-2"></i>Preparing</h3>
+                        <div id="preparing-tasks" class="space-y-3">
+                            <div class="kanban-item bg-white p-3 rounded-lg shadow cursor-move">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-medium">Draft SOP</span>
+                                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Medium</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1">First draft for review</p>
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-xs text-gray-400">Due: Oct 15</span>
+                                    <div class="flex space-x-1">
+                                        <button class="text-gray-400 hover:text-purple-700"><i class="fas fa-edit text-xs"></i></button>
+                                        <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Applying Column -->
+                    <div class="kanban-column p-4">
+                        <h3 class="font-medium mb-4 text-gray-700"><i class="fas fa-paper-plane mr-2"></i>Applying</h3>
+                        <div id="applying-tasks" class="space-y-3">
+                            <div class="kanban-item bg-white p-3 rounded-lg shadow cursor-move">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-medium">Submit CMU application</span>
+                                    <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Urgent</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1">Deadline Dec 15</p>
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-xs text-gray-400">Due: Dec 10</span>
+                                    <div class="flex space-x-1">
+                                        <button class="text-gray-400 hover:text-purple-700"><i class="fas fa-edit text-xs"></i></button>
+                                        <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Completed Column -->
+                    <div class="kanban-column p-4">
+                        <h3 class="font-medium mb-4 text-gray-700"><i class="fas fa-check-circle mr-2"></i>Completed</h3>
+                        <div id="completed-tasks" class="space-y-3">
+                            <div class="kanban-item bg-white p-3 rounded-lg shadow cursor-move opacity-70">
+                                <div class="flex justify-between items-start">
+                                    <span class="font-medium line-through">Take GRE</span>
+                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Done</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-1">Score: 325</p>
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-xs text-gray-400">Completed: Aug 20</span>
+                                    <div class="flex space-x-1">
+                                        <button class="text-gray-400 hover:text-purple-700"><i class="fas fa-edit text-xs"></i></button>
+                                        <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <h2 class="text-xl font-bold mb-6">Recent Activity</h2>
+                <div id="activity-timeline" class="space-y-4">
+                    <div class="timeline-item relative pl-10">
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center">
+                            <i class="fas fa-university"></i>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-medium">Added Stanford University</h4>
+                                <span class="text-sm text-gray-500">2 hours ago</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">Tagged as Reach school</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item relative pl-10">
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-medium">Uploaded SOP v2</h4>
+                                <span class="text-sm text-gray-500">Yesterday</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">Revised work experience section</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item relative pl-10">
+                        <div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-medium">Completed UIUC application</h4>
+                                <span class="text-sm text-gray-500">3 days ago</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">Application fee paid</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Universities Tab -->
+        <div id="universities-content" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">University Applications</h2>
+                <button id="add-university-btn" class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">
+                    <i class="fas fa-plus mr-2"></i>Add University
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-xl overflow-hidden shadow mb-8">
+                <div class="grid grid-cols-12 bg-gray-50 p-4 font-medium text-gray-700 border-b">
+                    <div class="col-span-4">University</div>
+                    <div class="col-span-2">Status</div>
+                    <div class="col-span-2">Category</div>
+                    <div class="col-span-2">Deadline</div>
+                    <div class="col-span-2">Actions</div>
+                </div>
+                
+                <div id="universities-list" class="divide-y">
+                    <div class="grid grid-cols-12 p-4 items-center hover:bg-gray-50">
+                        <div class="col-span-4 font-medium">
+                            <div class="flex items-center">
+                                <img src="https://logo.clearbit.com/stanford.edu" alt="Stanford" class="w-8 h-8 mr-3 rounded-full">
+                                <div>
+                                    <p>Stanford University</p>
+                                    <a href="https://cs.stanford.edu" target="_blank" class="text-sm text-purple-600 hover:underline">cs.stanford.edu</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="status-researching px-2 py-1 rounded-full text-xs font-medium">Researching</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="tag-reach px-2 py-1 rounded-full text-xs font-medium">Reach</span>
+                        </div>
+                        <div class="col-span-2 text-sm text-gray-600">Dec 1, 2025</div>
+                        <div class="col-span-2 flex space-x-2">
+                            <button class="text-purple-600 hover:text-purple-800"><i class="fas fa-edit"></i></button>
+                            <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-12 p-4 items-center hover:bg-gray-50">
+                        <div class="col-span-4 font-medium">
+                            <div class="flex items-center">
+                                <img src="https://logo.clearbit.com/illinois.edu" alt="UIUC" class="w-8 h-8 mr-3 rounded-full">
+                                <div>
+                                    <p>University of Illinois Urbana-Champaign</p>
+                                    <a href="https://cs.illinois.edu" target="_blank" class="text-sm text-purple-600 hover:underline">cs.illinois.edu</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="status-applied px-2 py-1 rounded-full text-xs font-medium">Applied</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="tag-target px-2 py-1 rounded-full text-xs font-medium">Target</span>
+                        </div>
+                        <div class="col-span-2 text-sm text-gray-600">Jan 15, 2026</div>
+                        <div class="col-span-2 flex space-x-2">
+                            <button class="text-purple-600 hover:text-purple-800"><i class="fas fa-edit"></i></button>
+                            <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-12 p-4 items-center hover:bg-gray-50">
+                        <div class="col-span-4 font-medium">
+                            <div class="flex items-center">
+                                <img src="https://logo.clearbit.com/asu.edu" alt="ASU" class="w-8 h-8 mr-3 rounded-full">
+                                <div>
+                                    <p>Arizona State University</p>
+                                    <a href="https://cidse.engineering.asu.edu" target="_blank" class="text-sm text-purple-600 hover:underline">cidse.engineering.asu.edu</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="status-researching px-2 py-1 rounded-full text-xs font-medium">Researching</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="tag-safety px-2 py-1 rounded-full text-xs font-medium">Safety</span>
+                        </div>
+                        <div class="col-span-2 text-sm text-gray-600">Mar 1, 2026</div>
+                        <div class="col-span-2 flex space-x-2">
+                            <button class="text-purple-600 hover:text-purple-800"><i class="fas fa-edit"></i></button>
+                            <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- University Details -->
+            <div class="bg-white rounded-xl p-6 card-hover mb-8">
+                <h2 class="text-xl font-bold mb-6">University Details</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Admission Requirements -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium mb-3 text-gray-700 border-b pb-2"><i class="fas fa-graduation-cap mr-2"></i>Admission Requirements</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-sm text-gray-500">GRE Requirements</label>
+                                <p class="font-medium">320+ (Q: 165+)</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">TOEFL/IELTS</label>
+                                <p class="font-medium">TOEFL: 100 / IELTS: 7.5</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">GPA Cutoff</label>
+                                <p class="font-medium">3.5/4.0</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Preferred Background</label>
+                                <p class="font-medium">CS or related field with DS/Algorithms</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Program Information -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium mb-3 text-gray-700 border-b pb-2"><i class="fas fa-info-circle mr-2"></i>Program Information</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-sm text-gray-500">Program Length</label>
+                                <p class="font-medium">2 years (4 semesters)</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Tuition</label>
+                                <p class="font-medium">$60,000/year</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Specializations</label>
+                                <p class="font-medium">AI, Systems, Theory, HCI</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Thesis Option</label>
+                                <p class="font-medium">Coursework only</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Job Prospects -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-medium mb-3 text-gray-700 border-b pb-2"><i class="fas fa-briefcase mr-2"></i>Job Prospects</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-sm text-gray-500">STEM Designated</label>
+                                <p class="font-medium">Yes (3 years OPT)</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Top Employers</label>
+                                <p class="font-medium">Google, Facebook, Amazon</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">Average Salary</label>
+                                <p class="font-medium">$120,000</p>
+                            </div>
+                            <div>
+                                <label class="text-sm text-gray-500">H1B Sponsorship</label>
+                                <p class="font-medium">90% of graduates</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <h2 class="text-xl font-bold mb-6">University Notes</h2>
+                <textarea class="w-full h-32 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent" placeholder="Add notes about this university..."></textarea>
+                <div class="mt-4 flex justify-end">
+                    <button class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">Save Notes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deadlines Tab -->
+        <div id="deadlines-content" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Application Deadlines</h2>
+                <div class="flex space-x-2">
+                    <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                        <i class="fas fa-filter mr-2"></i>Filter
+                    </button>
+                    <button class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">
+                        <i class="fas fa-plus mr-2"></i>Add Deadline
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Priority Deadlines -->
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h3 class="text-lg font-bold mb-4 text-red-600"><i class="fas fa-exclamation-triangle mr-2"></i>Priority Deadlines</h3>
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-red-500 pl-4 py-2">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-medium">Stanford MSCS</h4>
+                                    <p class="text-sm text-gray-500">Application Deadline</p>
+                                </div>
+                                <span class="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">Dec 1</span>
+                            </div>
+                            <div class="flex items-center mt-2 text-sm text-gray-500">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>Due in 45 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upcoming Deadlines -->
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h3 class="text-lg font-bold mb-4 text-yellow-600"><i class="fas fa-calendar-day mr-2"></i>Upcoming Deadlines</h3>
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-yellow-500 pl-4 py-2">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-medium">UIUC MSCS</h4>
+                                    <p class="text-sm text-gray-500">Application Deadline</p>
+                                </div>
+                                <span class="text-sm font-medium bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Jan 15</span>
+                            </div>
+                            <div class="flex items-center mt-2 text-sm text-gray-500">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>Due in 80 days</span>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-yellow-500 pl-4 py-2">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-medium">ASU MSCS</h4>
+                                    <p class="text-sm text-gray-500">Application Deadline</p>
+                                </div>
+                                <span class="text-sm font-medium bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Mar 1</span>
+                            </div>
+                            <div class="flex items-center mt-2 text-sm text-gray-500">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>Due in 125 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Other Deadlines -->
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h3 class="text-lg font-bold mb-4 text-gray-600"><i class="fas fa-calendar-check mr-2"></i>Completed Deadlines</h3>
+                    <div class="space-y-4">
+                        <div class="border-l-4 border-gray-400 pl-4 py-2 opacity-70">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-medium line-through">GRE Test</h4>
+                                    <p class="text-sm text-gray-500">Exam Date</p>
+                                </div>
+                                <span class="text-sm font-medium bg-gray-200 text-gray-700 px-2 py-1 rounded">Aug 20</span>
+                            </div>
+                            <div class="flex items-center mt-2 text-sm text-gray-500">
+                                <i class="fas fa-check-circle mr-2 text-green-500"></i>
+                                <span>Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Deadline Calendar -->
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <h2 class="text-xl font-bold mb-6">Deadline Calendar</h2>
+                <div id="deadline-calendar" class="h-96 flex items-center justify-center text-gray-500">
+                    <p>Calendar view will be displayed here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Tab -->
+        <div id="documents-content" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Application Documents</h2>
+                <div class="flex space-x-2">
+                    <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                        <i class="fas fa-filter mr-2"></i>Filter
+                    </button>
+                    <button class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">
+                        <i class="fas fa-plus mr-2"></i>Upload Document
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <button class="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50 transition">
+                    <i class="fas fa-file-alt text-3xl text-purple-600 mb-2"></i>
+                    <p class="font-medium">Statement of Purpose</p>
+                    <p class="text-sm text-gray-500">3 versions</p>
+                </button>
+                
+                <button class="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50 transition">
+                    <i class="fas fa-file-contract text-3xl text-blue-600 mb-2"></i>
+                    <p class="font-medium">CV/Resume</p>
+                    <p class="text-sm text-gray-500">2 versions</p>
+                </button>
+                
+                <button class="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50 transition">
+                    <i class="fas fa-envelope-open-text text-3xl text-green-600 mb-2"></i>
+                    <p class="font-medium">Recommendation Letters</p>
+                    <p class="text-sm text-gray-500">4 requests</p>
+                </button>
+                
+                <button class="bg-white p-4 rounded-lg shadow text-center hover:bg-gray-50 transition">
+                    <i class="fas fa-file-certificate text-3xl text-yellow-600 mb-2"></i>
+                    <p class="font-medium">Transcripts</p>
+                    <p class="text-sm text-gray-500">2 uploaded</p>
+                </button>
+            </div>
+            
+            <!-- SOP Versions -->
+            <div class="bg-white rounded-xl p-6 card-hover mb-8">
+                <h2 class="text-xl font-bold mb-6">Statement of Purpose</h2>
+                
+                <div class="space-y-4">
+                    <div class="document-version bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-medium">SOP v3 - Final</h3>
+                                <p class="text-sm text-gray-500">Revised with professor feedback</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Current</span>
+                                <span class="text-xs text-gray-500">Oct 15, 2025</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex space-x-2">
+                            <button class="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded hover:bg-purple-200">
+                                <i class="fas fa-eye mr-1"></i>Preview
+                            </button>
+                            <button class="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-100">
+                                <i class="fas fa-download mr-1"></i>Download
+                            </button>
+                            <button class="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-100">
+                                <i class="fas fa-share-alt mr-1"></i>Share
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="document-version bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-medium">SOP v2</h3>
+                                <p class="text-sm text-gray-500">Added research experience</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <span class="text-xs text-gray-500">Sep 28, 2025</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex space-x-2">
+                            <button class="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded hover:bg-purple-200">
+                                <i class="fas fa-eye mr-1"></i>Preview
+                            </button>
+                            <button class="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-100">
+                                <i class="fas fa-download mr-1"></i>Download
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="document-version bg-gray-50 p-4 rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-medium">SOP v1 - Draft</h3>
+                                <p class="text-sm text-gray-500">Initial version</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <span class="text-xs text-gray-500">Sep 10, 2025</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex space-x-2">
+                            <button class="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded hover:bg-purple-200">
+                                <i class="fas fa-eye mr-1"></i>Preview
+                            </button>
+                            <button class="text-sm bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-100">
+                                <i class="fas fa-download mr-1"></i>Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <button class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">
+                        <i class="fas fa-plus mr-2"></i>New Version
+                    </button>
+                </div>
+            </div>
+            
+            <!-- AI SOP Review -->
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <h2 class="text-xl font-bold mb-6"><i class="fas fa-robot mr-2 text-purple-600"></i>AI SOP Assistant</h2>
+                
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 class="font-medium mb-3">Get feedback on your SOP</h3>
+                    <p class="text-sm text-gray-600 mb-4">Our AI will analyze your Statement of Purpose for clarity, grammar, and content strength.</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <select class="flex-1 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                            <option>Select SOP to analyze</option>
+                            <option>SOP v3 - Final</option>
+                            <option>SOP v2</option>
+                            <option>SOP v1 - Draft</option>
+                        </select>
+                        <button class="bg-purple-700 text-white px-6 py-2 rounded-lg hover:bg-purple-800 transition whitespace-nowrap">
+                            <i class="fas fa-magic mr-2"></i>Analyze
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-medium mb-3">Previous Analysis Results</h3>
+                    <div class="space-y-3">
+                        <div class="bg-white p-3 rounded-lg border border-gray-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-medium">SOP v2 Analysis</span>
+                                <span class="text-xs text-gray-500">Sep 30, 2025</span>
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <p class="mb-1"><span class="font-medium">Score:</span> 82/100</p>
+                                <p class="mb-1"><span class="font-medium">Strengths:</span> Clear research goals, good academic background</p>
+                                <p><span class="font-medium">Suggestions:</span> Expand work experience section, reduce passive voice</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasks-content" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Application Tasks</h2>
+                <button id="add-task-btn" class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">
+                    <i class="fas fa-plus mr-2"></i>Add Task
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-xl overflow-hidden shadow mb-8">
+                <div class="grid grid-cols-12 bg-gray-50 p-4 font-medium text-gray-700 border-b">
+                    <div class="col-span-5">Task</div>
+                    <div class="col-span-2">Status</div>
+                    <div class="col-span-2">Priority</div>
+                    <div class="col-span-2">Due Date</div>
+                    <div class="col-span-1">Actions</div>
+                </div>
+                
+                <div id="tasks-list" class="divide-y">
+                    <div class="grid grid-cols-12 p-4 items-center hover:bg-gray-50">
+                        <div class="col-span-5">
+                            <div class="flex items-center">
+                                <input type="checkbox" class="mr-3 h-5 w-5 text-purple-600 rounded focus:ring-purple-500">
+                                <div>
+                                    <p class="font-medium">Submit Stanford application</p>
+                                    <p class="text-sm text-gray-500">Complete all sections and pay fee</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">In Progress</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">High</span>
+                        </div>
+                        <div class="col-span-2 text-sm text-gray-600">Dec 1, 2025</div>
+                        <div class="col-span-1 flex justify-center">
+                            <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-12 p-4 items-center hover:bg-gray-50">
+                        <div class="col-span-5">
+                            <div class="flex items-center">
+                                <input type="checkbox" class="mr-3 h-5 w-5 text-purple-600 rounded focus:ring-purple-500">
+                                <div>
+                                    <p class="font-medium">Request LOR from Prof. Smith</p>
+                                    <p class="text-sm text-gray-500">Send materials and deadline</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Pending</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Medium</span>
+                        </div>
+                        <div class="col-span-2 text-sm text-gray-600">Nov 15, 2025</div>
+                        <div class="col-span-1 flex justify-center">
+                            <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-12 p-4 items-center hover:bg-gray-50 opacity-70">
+                        <div class="col-span-5">
+                            <div class="flex items-center">
+                                <input type="checkbox" checked class="mr-3 h-5 w-5 text-purple-600 rounded focus:ring-purple-500">
+                                <div>
+                                    <p class="font-medium line-through">Take GRE exam</p>
+                                    <p class="text-sm text-gray-500">Score: 325 (Q: 168, V: 157)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Completed</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Medium</span>
+                        </div>
+                        <div class="col-span-2 text-sm text-gray-600">Aug 20, 2025</div>
+                        <div class="col-span-1 flex justify-center">
+                            <button class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Reminders -->
+            <div class="bg-white rounded-xl p-6 card-hover">
+                <h2 class="text-xl font-bold mb-6"><i class="fas fa-bell mr-2 text-purple-600"></i>Reminders</h2>
+                
+                <div class="space-y-4">
+                    <div class="border-l-4 border-red-500 pl-4 py-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium">TOEFL Score Expiring</h4>
+                                <p class="text-sm text-gray-500">Scores valid for 2 years only</p>
+                            </div>
+                            <span class="text-sm font-medium bg-red-100 text-red-800 px-2 py-1 rounded">Dec 2025</span>
+                        </div>
+                        <div class="flex items-center mt-2 text-sm text-gray-500">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span>Expires in 6 months</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-yellow-500 pl-4 py-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-medium">Financial Documents</h4>
+                                <p class="text-sm text-gray-500">Required for I-20 processing</p>
+                            </div>
+                            <span class="text-sm font-medium bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Jan 2026</span>
+                        </div>
+                        <div class="flex items-center mt-2 text-sm text-gray-500">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span>Prepare by January</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Tab -->
+        <div id="comparison-content" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">University Comparison</h2>
+                <div class="flex space-x-2">
+                    <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition">
+                        <i class="fas fa-sliders-h mr-2"></i>Customize
+                    </button>
+                    <button class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800 transition">
+                        <i class="fas fa-plus mr-2"></i>Add University
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-6 card-hover mb-8 overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">University</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission Rate</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GRE Requirement</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GPA Cutoff</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tuition</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Placement</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">H1B Success</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <img src="https://logo.clearbit.com/stanford.edu" alt="Stanford" class="w-8 h-8 mr-3 rounded-full">
+                                    <div>
+                                        <p class="font-medium">Stanford</p>
+                                        <span class="tag-reach px-2 py-1 rounded-full text-xs font-medium">Reach</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">320+</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.7/4.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$60,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">California</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">95%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">90%</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <img src="https://logo.clearbit.com/illinois.edu" alt="UIUC" class="w-8 h-8 mr-3 rounded-full">
+                                    <div>
+                                        <p class="font-medium">UIUC</p>
+                                        <span class="tag-target px-2 py-1 rounded-full text-xs font-medium">Target</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">15%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">315+</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.5/4.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$45,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Illinois</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">90%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">85%</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <img src="https://logo.clearbit.com/asu.edu" alt="ASU" class="w-8 h-8 mr-3 rounded-full">
+                                    <div>
+                                        <p class="font-medium">ASU</p>
+                                        <span class="tag-safety px-2 py-1 rounded-full text-xs font-medium">Safety</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">25%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">310+</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.2/4.0</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$35,000</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Arizona</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">80%</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">75%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Comparison Charts -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h3 class="text-lg font-bold mb-4">Admission Difficulty</h3>
+                    <div id="admission-chart" class="h-64 flex items-center justify-center text-gray-500">
+                        <p>Comparison chart will be displayed here</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h3 class="text-lg font-bold mb-4">Cost vs. Job Prospects</h3>
+                    <div id="cost-chart" class="h-64 flex items-center justify-center text-gray-500">
+                        <p>Comparison chart will be displayed here</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h3 class="text-lg font-bold mb-4">GRE/GPA Requirements</h3>
+                    <div id="requirements-chart" class="h-64 flex items-center justify-center text-gray-500">
+                        <p>Comparison chart will be displayed here</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-hover">
+                    <h3 class="text-lg font-bold mb-4">H1B Success Rate</h3>
+                    <div id="h1b-chart" class="h-64 flex items-center justify-center text-gray-500">
+                        <p>Comparison chart will be displayed here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add University Modal -->
+    <div id="university-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full p-6 max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Add University</h2>
+                <button id="close-university-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">University Name</label>
+                    <input type="text" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Program URL</label>
+                    <input type="url" name="url" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                            <option value="RESEARCHING">Researching</option>
+                            <option value="PLANNING_TO_APPLY">Planning to Apply</option>
+                            <option value="APPLIED">Applied</option>
+                            <option value="ADMITTED">Admitted</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select name="category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                            <option value="">Select Category</option>
+                            <option value="REACH">Reach</option>
+                            <option value="TARGET">Target</option>
+                            <option value="SAFETY">Safety</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Application Deadline</label>
+                        <input type="date" name="deadline" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">LOR Deadline</label>
+                        <input type="date" name="lorDeadline" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea name="notes" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent" rows="3"></textarea>
+                </div>
+                
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="hideUniversityModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800">Save University</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="task-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Add Task</h2>
+                <button id="close-task-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Task Name</label>
+                    <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent" placeholder="e.g. Submit Stanford application">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent" rows="2" placeholder="Additional details..."></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                            <option value="PENDING">Pending</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="COMPLETED">Completed</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                        <select name="priority" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="URGENT">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input type="date" name="dueDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Related University</label>
+                        <select name="universityId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent">
+                            <option value="">None</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="hideTaskModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="bg-purple-700 text-white px-4 py-2 rounded-lg hover:bg-purple-800">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality (moved from app.js for better organization)
+        function setupTabSwitching() {
+            const tabs = {
+                'dashboard-tab': 'dashboard-content',
+                'universities-tab': 'universities-content', 
+                'deadlines-tab': 'deadlines-content',
+                'documents-tab': 'documents-content',
+                'tasks-tab': 'tasks-content',
+                'comparison-tab': 'comparison-content'
+            };
+
+            Object.keys(tabs).forEach(tabId => {
+                const tab = document.getElementById(tabId);
+                if (tab) {
+                    tab.addEventListener('click', () => switchTab(tabId.replace('-tab', '')));
+                }
+            });
+        }
+
+        function switchTab(targetTab) {
+            // Hide all content sections
+            const contentSections = ['dashboard-content', 'universities-content', 'deadlines-content', 
+                                   'documents-content', 'tasks-content', 'comparison-content'];
+            
+            contentSections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) section.classList.add('hidden');
+            });
+
+            // Remove active class from all tabs
+            const tabs = ['dashboard-tab', 'universities-tab', 'deadlines-tab', 
+                         'documents-tab', 'tasks-tab', 'comparison-tab'];
+            
+            tabs.forEach(tabId => {
+                const tab = document.getElementById(tabId);
+                if (tab) {
+                    tab.className = tab.className.replace('tab-active', '').replace('text-purple-700 border-purple-700', 'text-gray-500');
+                    tab.className += ' text-gray-500 hover:text-purple-700';
+                }
+            });
+
+            // Show target content and activate tab
+            const targetContent = document.getElementById(targetTab + '-content');
+            const targetTabElement = document.getElementById(targetTab + '-tab');
+            
+            if (targetContent) targetContent.classList.remove('hidden');
+            if (targetTabElement) {
+                targetTabElement.className = targetTabElement.className.replace('text-gray-500', '').replace('hover:text-purple-700', '');
+                targetTabElement.className += ' text-purple-700 border-b-2 border-purple-700';
+            }
+        }
+
+        // Modal management
+        function setupModals() {
+            const universityModal = document.getElementById('university-modal');
+            const taskModal = document.getElementById('task-modal');
+            
+            if (universityModal) {
+                const closeBtn = document.getElementById('close-university-modal');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => universityModal.classList.add('hidden'));
+                }
+                
+                universityModal.addEventListener('click', (e) => {
+                    if (e.target === universityModal) universityModal.classList.add('hidden');
+                });
+            }
+            
+            if (taskModal) {
+                const closeBtn = document.getElementById('close-task-modal');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => taskModal.classList.add('hidden'));
+                }
+                
+                taskModal.addEventListener('click', (e) => {
+                    if (e.target === taskModal) taskModal.classList.add('hidden');
+                });
+            }
+        }
+
+        // Initialize modals when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            setupModals();
+        });
+    </script>
+</html>

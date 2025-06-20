@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Modern UI</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/modern.css">
+</head>
+<body>
+    <div style="padding: 2rem; max-width: 1200px; margin: 0 auto;">
+        <h1 class="text-heading-1 mb-4">Modern UI Component Test</h1>
+        
+        <!-- Test Buttons -->
+        <div class="flex gap-3 mb-4">
+            <button class="modern-btn modern-btn-primary">Primary Button</button>
+            <button class="modern-btn modern-btn-secondary">Secondary Button</button>
+            <button class="modern-btn modern-btn-accent">Accent Button</button>
+            <button class="modern-btn modern-btn-ghost">Ghost Button</button>
+        </div>
+        
+        <!-- Test Stats Cards -->
+        <div class="modern-stats-grid mb-4">
+            <div class="modern-stat-card">
+                <div class="modern-stat-header">
+                    <div class="modern-stat-icon" style="background: #f3f4f6; color: #374151;">
+                        <i class="fas fa-university"></i>
+                    </div>
+                </div>
+                <div class="modern-stat-value">15</div>
+                <div class="modern-stat-label">Universities</div>
+                <div class="modern-stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    5 new this month
+                </div>
+            </div>
+            
+            <div class="modern-stat-card">
+                <div class="modern-stat-header">
+                    <div class="modern-stat-icon" style="background: #fee2e2; color: #dc2626;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="modern-stat-value">8</div>
+                <div class="modern-stat-label">Pending Deadlines</div>
+                <div class="modern-stat-change negative">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    2 overdue
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Modern Card -->
+        <div class="modern-card mb-4">
+            <div class="modern-card-header">
+                <h3 class="text-heading-3">Test Card</h3>
+                <button class="modern-btn modern-btn-ghost modern-btn-sm">
+                    <i class="fas fa-expand-alt"></i>
+                </button>
+            </div>
+            <div class="modern-card-content">
+                <p class="text-body">This is a test of the modern card component with proper typography and spacing.</p>
+            </div>
+        </div>
+        
+        <!-- Test Form -->
+        <div class="modern-card">
+            <div class="modern-card-header">
+                <h3 class="text-heading-3">Test Form</h3>
+            </div>
+            <div class="modern-card-content">
+                <form class="modern-form">
+                    <div class="modern-form-group">
+                        <label class="modern-label">Test Input</label>
+                        <input type="text" class="modern-input" placeholder="Enter some text">
+                    </div>
+                    <div class="modern-form-group">
+                        <label class="modern-label">Test Select</label>
+                        <select class="modern-input modern-select">
+                            <option>Option 1</option>
+                            <option>Option 2</option>
+                            <option>Option 3</option>
+                        </select>
+                    </div>
+                    <div class="modern-form-group">
+                        <label class="modern-label">Test Textarea</label>
+                        <textarea class="modern-input" rows="3" placeholder="Enter some text"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modern-card-footer">
+                <div class="flex justify-end gap-3">
+                    <button class="modern-btn modern-btn-secondary">Cancel</button>
+                    <button class="modern-btn modern-btn-primary">Submit</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Notifications -->
+        <div class="flex gap-3 mt-4">
+            <button class="modern-btn modern-btn-accent" onclick="testSuccess()">Test Success</button>
+            <button class="modern-btn modern-btn-secondary" onclick="testError()">Test Error</button>
+            <button class="modern-btn modern-btn-ghost" onclick="testLoading()">Test Loading</button>
+        </div>
+    </div>
+
+    <!-- Test API functions -->
+    <script src="js/api.js"></script>
+    <script>
+        function testSuccess() {
+            showSuccess('This is a test success message!');
+        }
+        
+        function testError() {
+            showError('This is a test error message!');
+        }
+        
+        function testLoading() {
+            const loading = showLoading('Testing loading...');
+            setTimeout(() => {
+                hideLoading();
+                showSuccess('Loading test complete!');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+[build]
+  publish = "."
+  
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/modern.html"
+  status = 200
+  force = false
+  conditions = {Role = ["admin"]}
+
+[[redirects]]  
+  from = "/login"
+  to = "/login-modern.html"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/login-modern.html"
+  status = 200
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
