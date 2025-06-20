@@ -7,7 +7,7 @@
     "dev": "nodemon server/index.js",
     "start": "node server/index.js",
     "client": "live-server --port=3000",
-    "build": "npm run prisma:generate",
+    "build": "npm run prisma:generate && npm run prisma:migrate:deploy",
     "postinstall": "npm run prisma:generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
